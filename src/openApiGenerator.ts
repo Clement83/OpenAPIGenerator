@@ -128,7 +128,7 @@ async function generateDTOs(schemas: Record<string, any>, dtoDir: string) {
     const dtoExports: string[] = []
 
     for (const [schemaName, schema] of Object.entries(schemas)) {
-        const dtoContent = generateDTOClass(schemaName, schema, schemas)
+        const dtoContent = generateDTOType(schemaName, schema, schemas)
         const fileName = `${schemaName}.ts`
 
         await fs.writeFile(path.join(dtoDir, fileName), dtoContent)
@@ -140,9 +140,9 @@ async function generateDTOs(schemas: Record<string, any>, dtoDir: string) {
     await fs.writeFile(path.join(dtoDir, "index.ts"), indexContent)
 }
 
-function generateDTOClass(name: string, schema: any, allSchemas: Record<string, any>): string {
+function generateDTOType(name: string, schema: any, allSchemas: Record<string, any>): string {
     const properties = schema.properties || {}
-    const required = schema.required || []
+    const required = new Set(schema.required || [])
 
     const usedRefs = new Set<string>()
 
@@ -167,41 +167,23 @@ function generateDTOClass(name: string, schema: any, allSchemas: Record<string, 
     if (usedRefs.size > 0) {
         importSection =
             Array.from(usedRefs)
-                .map((ref) => `import { ${ref} } from './${ref}';`)
+                .map((ref) => `import type { ${ref} } from './${ref}';`)
                 .join("\n") + "\n\n"
     }
 
-    let classContent = `${importSection}export class ${name} {\n`
+    let typeContent = `${importSection}export interface ${name} {\n`
 
     for (const [propName, propSchema] of Object.entries(properties)) {
-        const isRequired = required.includes(propName)
-        const propType = getTypeScriptType(propSchema as SchemaProperty, allSchemas)
-        const optional = isRequired ? "" : "?"
-        classContent += `  ${propName}${optional}: ${propType};\n`
+        const isOptional = !required.has(propName)
+        const tsType = getTypeScriptType(propSchema as SchemaProperty, allSchemas)
+        typeContent += `  ${propName}${isOptional ? "?" : ""}: ${tsType};\n`
     }
 
-    classContent += "\n  constructor(data: Partial<" + name + "> = {}) {\n"
-    for (const propName of Object.keys(properties)) {
-        classContent += `    this.${propName} = data.${propName};\n`
-    }
-    classContent += "  }\n"
+    typeContent += "}\n"
 
-    classContent += "\n  toJSON(): Record<string, any> {\n"
-    classContent += "    return {\n"
-    for (const propName of Object.keys(properties)) {
-        classContent += `      ${propName}: this.${propName},\n`
-    }
-    classContent += "    };\n"
-    classContent += "  }\n"
-
-    classContent += `\n  static fromJSON(json: any): ${name} {\n`
-    classContent += `    return new ${name}(json);\n`
-    classContent += "  }\n"
-
-    classContent += "}\n"
-
-    return classContent
+    return typeContent
 }
+
 
 function getTypeScriptType(schema: SchemaProperty, allSchemas: Record<string, any>): string {
     if (schema.$ref) {
