@@ -145,7 +145,7 @@ function generateDTOType(name: string, schema: any, allSchemas: Record<string, a
 
     // 🔹 Cas des enums simples
     if (schema.enum) {
-        const enumType = schema.enum.map((v) => (typeof v === "string" ? `'${v}'` : v)).join(" | ");
+        const enumType = schema.enum.map((v: any) => (typeof v === "string" ? `'${v}'` : v)).join(" | ");
         return `export type ${name} = ${enumType};\n`;
     }
 
@@ -164,12 +164,12 @@ function generateDTOType(name: string, schema: any, allSchemas: Record<string, a
                 }
             } else if (part.type === "object" && part.properties) {
                 Object.assign(properties, part.properties);
-                (part.required || []).forEach((r) => requiredProps.add(r));
+                (part.required || []).forEach((r: string) => requiredProps.add(r));
             }
         }
     } else {
         properties = schema.properties || {};
-        (schema.required || []).forEach((r) => requiredProps.add(r));
+        (schema.required || []).forEach((r: string) => requiredProps.add(r));
     }
 
     // 🔹 Collecte les refs à importer
