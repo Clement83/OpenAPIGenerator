@@ -1,6 +1,6 @@
 {
     "name": "vite-plugin-openapi-generator",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "A Vite plugin to generate TypeScript clients and DTOs from OpenAPI YAML files.",
     "main": "dist/openApiGenerator.js",
     "types": "dist/openApiGenerator.d.ts",
