@@ -5,8 +5,6 @@ import yaml from "js-yaml"
 
 interface OpenAPIGeneratorOptions {
     sourceDir: string
-    outputDir: string
-    defaultBaseUrl?: string
 }
 
 interface OpenAPISpec {
@@ -48,7 +46,7 @@ export default function openApiGenerator(options: OpenAPIGeneratorOptions): Plug
 }
 
 async function generateFromOpenAPIFiles(options: OpenAPIGeneratorOptions) {
-    const { sourceDir, defaultBaseUrl = "http://localhost:3000" } = options
+    const { sourceDir } = options
 
     async function walk(dir: string): Promise<string[]> {
         const entries = await fs.readdir(dir, { withFileTypes: true })
@@ -81,7 +79,7 @@ async function generateFromOpenAPIFiles(options: OpenAPIGeneratorOptions) {
                 const specContent = await fs.readFile(yamlFilePath, "utf-8")
                 const spec: OpenAPISpec = yaml.load(specContent) as OpenAPISpec
 
-                const baseUrl = spec.servers?.[0]?.url || defaultBaseUrl
+                const baseUrl = spec.servers?.[0]?.url ?? ""
 
                 const fileName = path.basename(yamlFilePath, path.extname(yamlFilePath))
                 const className = pascalCase(fileName) + "Client"
@@ -281,7 +279,8 @@ export class ${className} {
             }
 
             const operationId = operation.operationId || generateOperationId(method, pathTemplate)
-            const methodName = camelCase(operationId)
+            // 🔹 MODIFICATION: Préfixer le nom de la méthode avec le verbe HTTP
+            const methodName = method + camelCase(operationId)
 
             // Extraire les paramètres du path
             const pathParams = extractPathParameters(pathTemplate)
@@ -368,7 +367,7 @@ function extractQueryParameters(operation: any): string[] {
 
 function generateOperationId(method: string, path: string): string {
     const cleanPath = path.replace(/\{[^}]+\}/g, "By").replace(/[^a-zA-Z0-9]/g, "")
-    return method + cleanPath
+    return cleanPath // 🔹 MODIFICATION: Retourner seulement le path nettoyé sans le verbe HTTP
 }
 
 function camelCase(str: string): string {
