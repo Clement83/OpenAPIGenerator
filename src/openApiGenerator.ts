@@ -141,47 +141,77 @@ async function generateDTOs(schemas: Record<string, any>, dtoDir: string) {
 }
 
 function generateDTOType(name: string, schema: any, allSchemas: Record<string, any>): string {
-    const properties = schema.properties || {}
-    const required = new Set(schema.required || [])
+    const usedRefs = new Set<string>();
 
-    const usedRefs = new Set<string>()
+    // 🔹 Cas des enums simples
+    if (schema.enum) {
+        const enumType = schema.enum.map((v) => (typeof v === "string" ? `'${v}'` : v)).join(" | ");
+        return `export type ${name} = ${enumType};\n`;
+    }
 
+    let properties: Record<string, SchemaProperty> = {};
+    let requiredProps = new Set<string>(schema.required || []);
+
+    const inheritance: string[] = [];
+
+    if (schema.allOf) {
+        for (const part of schema.allOf) {
+            if (part.$ref) {
+                const refName = part.$ref.split("/").pop();
+                if (refName) {
+                    usedRefs.add(refName);
+                    inheritance.push(refName);
+                }
+            } else if (part.type === "object" && part.properties) {
+                Object.assign(properties, part.properties);
+                (part.required || []).forEach((r) => requiredProps.add(r));
+            }
+        }
+    } else {
+        properties = schema.properties || {};
+        (schema.required || []).forEach((r) => requiredProps.add(r));
+    }
+
+    // 🔹 Collecte les refs à importer
     function collectRefs(propSchema: SchemaProperty) {
         if (propSchema.$ref) {
-            const refName = propSchema.$ref.split("/").pop()
+            const refName = propSchema.$ref.split("/").pop();
             if (refName && refName !== name) {
-                usedRefs.add(refName)
+                usedRefs.add(refName);
             }
         }
         if (propSchema.type === "array" && propSchema.items) {
-            collectRefs(propSchema.items)
+            collectRefs(propSchema.items);
         }
         if (propSchema.type === "object" && propSchema.properties) {
-            Object.values(propSchema.properties).forEach(collectRefs)
+            Object.values(propSchema.properties).forEach(collectRefs);
         }
     }
 
-    Object.values(properties).forEach((prop) => collectRefs(prop as SchemaProperty))
+    Object.values(properties).forEach((prop) => collectRefs(prop as SchemaProperty));
 
-    let importSection = ""
+    // 🔹 Génère les imports
+    let importSection = "";
     if (usedRefs.size > 0) {
         importSection =
             Array.from(usedRefs)
                 .map((ref) => `import type { ${ref} } from './${ref}';`)
-                .join("\n") + "\n\n"
+                .join("\n") + "\n\n";
     }
 
-    let typeContent = `${importSection}export interface ${name} {\n`
+    // 🔹 Génère le type/interface
+    const extendsLine = inheritance.length > 0 ? ` extends ${inheritance.join(", ")}` : "";
+    let typeContent = `${importSection}export interface ${name}${extendsLine} {\n`;
 
     for (const [propName, propSchema] of Object.entries(properties)) {
-        const isOptional = !required.has(propName)
-        const tsType = getTypeScriptType(propSchema as SchemaProperty, allSchemas)
-        typeContent += `  ${propName}${isOptional ? "?" : ""}: ${tsType};\n`
+        const isRequired = requiredProps.has(propName);
+        const propType = getTypeScriptType(propSchema as SchemaProperty, allSchemas);
+        const optional = isRequired ? "" : "?";
+        typeContent += `  ${propName}${optional}: ${propType};\n`;
     }
 
-    typeContent += "}\n"
-
-    return typeContent
+    typeContent += "}\n";
+    return typeContent;
 }
 
 
