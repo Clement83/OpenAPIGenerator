@@ -280,7 +280,7 @@ export class ${className} {
 
             const operationId = operation.operationId || generateOperationId(method, pathTemplate)
             // 🔹 MODIFICATION: Préfixer le nom de la méthode avec le verbe HTTP
-            const methodName = method + camelCase(operationId)
+            const methodName = method + pascalCase(operationId)
 
             // Extraire les paramètres du path
             const pathParams = extractPathParameters(pathTemplate)
