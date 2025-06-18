@@ -3,7 +3,7 @@
 
 [![npm](https://img.shields.io/npm/v/vite-plugin-openapi-generator.svg)](https://www.npmjs.com/package/vite-plugin-openapi-generator)
 [![license](https://img.shields.io/npm/l/vite-plugin-openapi-generator.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/tonpseudo/vite-plugin-openapi-generator.svg)](https://github.com/tonpseudo/vite-plugin-openapi-generator)
+[![GitHub stars](https://img.shields.io/github/stars/clement83/vite-plugin-openapi-generator.svg)](https://github.com/clement83/vite-plugin-openapi-generator)
 
 > A Vite plugin to generate TypeScript DTOs and client classes from OpenAPI YAML files.
 
