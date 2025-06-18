@@ -1,0 +1,1 @@
+export { createOpenApiGenerator as default } from './openApiGenerator';
