@@ -130,7 +130,7 @@ async function generateDTOs(schemas: Record<string, any>, dtoDir: string) {
         const fileName = `${schemaName}.ts`
 
         await fs.writeFile(path.join(dtoDir, fileName), dtoContent)
-        dtoExports.push(`export { ${schemaName} } from './${schemaName}';`)
+        dtoExports.push(`export type { ${schemaName} } from './${schemaName}';`)
     }
 
     // Créer un fichier index.ts pour exporter tous les DTOs
