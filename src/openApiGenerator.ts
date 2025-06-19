@@ -36,7 +36,7 @@ interface GeneratedFile {
     spec: OpenAPISpec
 }
 
-export default function openApiGenerator(options: OpenAPIGeneratorOptions): Plugin {
+export function openApiGenerator(options: OpenAPIGeneratorOptions): Plugin {
     return {
         name: "openapi-generator",
         buildStart: async () => {
@@ -383,9 +383,4 @@ function camelCase(str: string): string {
 function pascalCase(str: string): string {
     const camelCased = camelCase(str)
     return camelCased.charAt(0).toUpperCase() + camelCased.slice(1)
-}
-
-// Fonction utilitaire pour utiliser le plugin
-export function createOpenApiGenerator(options: OpenAPIGeneratorOptions) {
-    return openApiGenerator(options)
 }

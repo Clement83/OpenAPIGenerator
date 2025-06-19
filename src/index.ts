@@ -1,1 +1,1 @@
-export { createOpenApiGenerator as default } from './openApiGenerator';
+export { openApiGenerator, openApiGenerator as default } from './openApiGenerator';
